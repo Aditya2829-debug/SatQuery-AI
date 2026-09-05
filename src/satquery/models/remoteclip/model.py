@@ -5,6 +5,9 @@ from typing import Sequence
 
 import torch
 
+from ..artifacts import artifact_path
+from ..images import rgb_image
+
 
 class RemoteCLIPModel:
     """Load RemoteCLIP and expose normalized image and text embeddings.
@@ -21,6 +24,10 @@ class RemoteCLIPModel:
         pretrained: str | None = None,
         device: str | torch.device | None = None,
     ) -> None:
+        if checkpoint_path is not None and pretrained is not None:
+            raise ValueError("Provide checkpoint_path or pretrained, not both.")
+        if pretrained is None:
+            checkpoint_path = artifact_path(checkpoint_path, "SATQUERY_MODEL2_CHECKPOINT")
         try:
             import open_clip
         except ImportError as exc:  # pragma: no cover - depends on optional runtime package
@@ -28,9 +35,7 @@ class RemoteCLIPModel:
                 "RemoteCLIP requires open_clip_torch. Install the project requirements first."
             ) from exc
 
-        self.device = torch.device(
-            device or ("cuda" if torch.cuda.is_available() else "cpu")
-        )
+        self.device = torch.device(device or ("cuda" if torch.cuda.is_available() else "cpu"))
         self.model_name = model_name
         self.model, _, self.preprocess = open_clip.create_model_and_transforms(
             model_name,
@@ -51,7 +56,7 @@ class RemoteCLIPModel:
 
     @torch.inference_mode()
     def encode_image(self, image) -> torch.Tensor:
-        image_tensor = self.preprocess(image).unsqueeze(0).to(self.device)
+        image_tensor = self.preprocess(rgb_image(image)).unsqueeze(0).to(self.device)
         return self._normalize(self.model.encode_image(image_tensor))
 
     @torch.inference_mode()

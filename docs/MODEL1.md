@@ -1,5 +1,10 @@
 # Model 1 — Remote-Sensing VQA
 
+Reusable loader: `satquery.models.qwen_vqa.QwenVQA`.
+See [backend setup and examples](MODEL_INTEGRATION.md) for external adapter paths,
+the existing backend bridge, and inference commands. The adapter must be obtained
+from the training owner; its current external location/access is not verified.
+
 ## Base Model
 Qwen3-VL-2B-Instruct
 
@@ -16,7 +21,9 @@ QLoRA
 - Final training loss: 0.667
 
 ## Evaluation
-Held-out benchmark: VRSBench-100
+Reported benchmark: VRSBench-100. These are historical results, not a new
+evaluation of the integration loader. The recorded predictions are available in
+[`outputs/qwen3vl_lora_vrsbench100.jsonl`](../outputs/qwen3vl_lora_vrsbench100.jsonl).
 
 ### Results
 - Zero-shot baseline: 51.00%
@@ -40,3 +47,9 @@ Held-out benchmark: VRSBench-100
 ## Notes
 The QLoRA-adapted model showed a significant improvement over the zero-shot baseline.
 Large model weights and adapter binaries are stored externally and are not committed to GitHub.
+
+The historical scripts `train_qwen3vl_qlora.py` and `eval_qwen3vl_lora.py`
+preserve their original Colab/repository paths. They are training/evaluation
+entry points, not modules to import into a server. Training additionally needs
+`datasets` and `bitsandbytes` on a supported NVIDIA runtime. For backend inference,
+use the reusable loader and its explicit external paths instead.
