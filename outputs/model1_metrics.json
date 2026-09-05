@@ -1,0 +1,13 @@
+{
+  "model": "Qwen3-VL-2B-Instruct",
+  "adaptation": "QLoRA",
+  "train_samples": 5000,
+  "trainable_params": 6422528,
+  "total_params": 2133954560,
+  "trainable_percent": 0.301,
+  "baseline_accuracy": 51.0,
+  "qlora_accuracy": 68.0,
+  "improvement_pp": 17.0,
+  "train_loss": 0.667,
+  "train_runtime_sec": 3418
+}
