@@ -56,3 +56,24 @@ class RemoteCLIPRetrievalModel(BaseSpecialistModel):
             result=self.retriever.search(inputs["query"], top_k=inputs.get("top_k", 5)),
             limitations=["Results refer to the configured index; scores are cosine similarities."],
         )
+
+
+class ChangeDetectionModel(BaseSpecialistModel):
+    def __init__(self, detector):
+        super().__init__("CD003-UNet-ResNet34")
+        self.detector = detector
+
+    def process(self, inputs):
+        result = self.detector.detect(inputs["before_image_bytes"], inputs["after_image_bytes"])
+        # The raw numpy mask is useful internally but not JSON serializable. Backend clients
+        # receive structured regions, sizes, threshold and change percentage instead.
+        result = {key: value for key, value in result.items() if key != "mask"}
+        return ModelResult(
+            status="success",
+            result=result,
+            model_name=self.model_name,
+            confidence=None,
+            limitations=[
+                "Requires aligned before/after RGB imagery; change percentage is pixel-based at model resolution."
+            ],
+        )
