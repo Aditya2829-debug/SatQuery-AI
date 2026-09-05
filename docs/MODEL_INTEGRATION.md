@@ -1,100 +1,113 @@
-# Model 1 and Model 2: backend handoff
+# Models 1–3 backend handoff
 
-Both implementations live on team `main`. Model 1 is Qwen3-VL VQA; Model 2 is
-RemoteCLIP classification and text-to-image retrieval. They do not produce
-bounding boxes, segmentation masks, or geospatial measurements.
+Models 1, 2, and 3 all live on team `main` and expose backend-facing Python interfaces.
+Large trained artifacts stay outside Git and are injected through environment variables or explicit paths.
 
-| Asset | Model 1 | Model 2 |
-| --- | --- | --- |
-| Python entry point | `satquery.models.qwen_vqa.QwenVQA` | `satquery.models.remoteclip` |
-| Model details | [MODEL1.md](MODEL1.md) | [MODEL2.md](MODEL2.md) |
-| Recorded metrics | [model1_metrics.json](../outputs/model1_metrics.json) | [summary](../outputs/model2/remoteclip_model2_summary.json) |
-| External artifacts | Base model + trained LoRA directory | Official ViT-B-32 checkpoint; retrieval also needs an index |
-| Artifact readiness | Adapter location/access must be confirmed with training owner | Original index is `restore_required`; checkpoint must be provisioned |
+| Model | Purpose | Python entry point | External artifact |
+| --- | --- | --- | --- |
+| Model 1 | Qwen3-VL satellite VQA | `satquery.models.qwen_vqa.QwenVQA` | trained LoRA adapter directory |
+| Model 2 | RemoteCLIP classification / retrieval | `satquery.models.remoteclip` | official RemoteCLIP checkpoint; retrieval also needs index |
+| Model 3 | bi-temporal change detection | `satquery.models.change_detection.ChangeDetector` | `cd003_fixedmask_best.pt` |
 
-## Install and configure
+Details and metrics:
 
-Use Python 3.11 in an isolated environment. From the repository root:
+- [MODEL1.md](MODEL1.md) · [Model 1 metrics](../outputs/model1_metrics.json)
+- [MODEL2.md](MODEL2.md) · [Model 2 summary](../outputs/model2/remoteclip_model2_summary.json)
+- [MODEL3.md](MODEL3.md) · [Model 3 metrics](../outputs/model3/model3_metrics.json)
+
+## Install
+
+From the repository root:
 
 ```bash
 python -m pip install -r requirements-models.txt
 python -m pip install -e .
 ```
 
-For the team backend also install
-`backend/SatQueryAI_backend/requirements.txt`. The model-only requirements avoid
-installing the whole GIS/backend stack for inference. NVIDIA GPU is recommended
-for Model 1; CPU float32 is supported by the loader but can be slow and needs
-enough RAM. This loader applies LoRA to the base model without 4-bit quantization;
-QLoRA describes the historical training method.
+For the existing backend also install:
 
-Set these in the **worker process environment**, or pass explicit paths to the
-loaders. Copying `.env.example` alone does not load these values into Python.
-Relative paths resolve from the current working directory; absolute paths are
-recommended, especially when starting the backend from its own folder.
+```bash
+python -m pip install -r backend/SatQueryAI_backend/requirements.txt
+```
 
-| Environment variable | Required content |
-| --- | --- |
-| `SATQUERY_MODEL1_ADAPTER` | Directory with `adapter_config.json` and `adapter_model.safetensors` (or `adapter_model.bin`) from the completed VRSBench run |
-| `SATQUERY_MODEL2_CHECKPOINT` | Local official `RemoteCLIP-ViT-B-32.pt` checkpoint |
-| `SATQUERY_MODEL2_INDEX` | Local compatible retrieval index `.pt`; unnecessary for classification |
+## Required artifact environment variables
 
-Explicit paths take precedence over environment values. Missing files fail
-before loading the model. Weights/indexes remain outside Git; no artifact URL
-or access permission has been verified for the team's trained adapter/index.
-Obtain these from the training owner and record checksums in your deployment
-inventory. Do not use randomly initialized weights or fabricated embeddings.
-Model 1 downloads its public base model/processor into the Hugging Face cache
-on first use; for an offline worker, pre-stage it and pass its local directory
-as `base_model`. See the [official Qwen model card](https://huggingface.co/Qwen/Qwen3-VL-2B-Instruct)
-and [RemoteCLIP upstream](https://github.com/ChenDelong1999/RemoteCLIP) for public base weights.
+```bash
+SATQUERY_MODEL1_ADAPTER=/absolute/path/to/qwen3vl_vrsbench_lora
+SATQUERY_MODEL2_CHECKPOINT=/absolute/path/to/RemoteCLIP-ViT-B-32.pt
+SATQUERY_MODEL2_INDEX=/absolute/path/to/eurosat_remoteclip_vitb32_index.pt
+SATQUERY_MODEL3_CHECKPOINT=/absolute/path/to/cd003_fixedmask_best.pt
+```
 
-## Runnable examples
+`SATQUERY_MODEL2_INDEX` is only required for retrieval. Model 2 classification only needs the RemoteCLIP checkpoint.
+The historical Model 2 index is still marked `restore_required`; regenerate or restore the real embedding index rather than fabricating one.
 
-After setting the environment variables above:
+## Unified runnable CLI
 
 ```bash
 python examples/model_inference.py vqa --image /data/scene.png --query "Is there a river?"
-python examples/model_inference.py classify --image /data/scene.png --classes river forest
+python examples/model_inference.py classify --image /data/scene.png --classes river forest urban
 python examples/model_inference.py retrieve --query "a satellite image of a river" --top-k 5
+python examples/model_inference.py change --before /data/t1.png --after /data/t2.png
 ```
 
-The same script accepts `--adapter`, `--checkpoint`, `--index`, and `--device cpu`
-or `--device cuda`. Outputs are JSON. Initialize models once per inference
-worker, reuse them, and serialize GPU requests or use a bounded inference queue.
-Run blocking inference outside the async HTTP event loop.
+Optional flags include `--adapter`, `--checkpoint`, `--index`, and `--device cpu|cuda`.
+
+## Python interfaces
+
+### Model 1
 
 ```python
 from satquery.models.qwen_vqa import QwenVQA
-from satquery.models.remoteclip import RemoteCLIPModel, RemoteCLIPZeroShotClassifier
 
-vqa = QwenVQA()  # environment adapter path
-answer = vqa.predict("/data/scene.png", "Is there a river?")
-# {"answer": ..., "raw_answer": ..., "model": ..., "confidence": None}
-
-model2 = RemoteCLIPModel()  # environment checkpoint path
-classifier = RemoteCLIPZeroShotClassifier(model2)
-classes = ["river", "forest"]  # ordered candidate labels chosen by the application
-embeddings = classifier.build_class_embeddings(classes)  # cache for this class list
-result = classifier.predict("/data/scene.png", classes, class_embeddings=embeddings)
-# label, label_index, score, scores (CPU tensor; convert scores.tolist() for JSON)
+vqa = QwenVQA()
+result = vqa.predict(image_bytes, "Is there a river?")
 ```
 
-Image inputs accept local paths, encoded image bytes, or PIL images and become
-RGB. URLs are not fetched. Convert multispectral/SAR rasters to an appropriate
-validated RGB representation upstream; these interfaces do not establish SAR
-or multispectral accuracy. Model 1 answers are not calibrated confidence scores;
-Model 2 returns cosine similarities, which can be negative and are not probabilities.
+### Model 2
 
-## Connect to the existing backend
+```python
+from satquery.models.remoteclip import RemoteCLIPModel, RemoteCLIPZeroShotClassifier
 
-The opt-in bridges in `backend/SatQueryAI_backend/app/models/trained.py` implement
-the existing `BaseSpecialistModel.process(inputs) -> ModelResult` interface. They
-return JSON-serializable results with `confidence=None`. The backend registry,
-router, endpoints, and default placeholders keep their current behavior until
-the backend owner explicitly injects a configured model at worker startup.
+remoteclip = RemoteCLIPModel()
+classifier = RemoteCLIPZeroShotClassifier(remoteclip)
+classes = ["river", "forest", "urban"]
+class_embeddings = classifier.build_class_embeddings(classes)
+result = classifier.predict(image_bytes, classes, class_embeddings=class_embeddings)
+```
 
-Run this from `backend/SatQueryAI_backend` after installing the root package:
+Retrieval:
+
+```python
+from satquery.models.remoteclip import RemoteCLIPRetriever
+
+retriever = RemoteCLIPRetriever(remoteclip, None)  # reads SATQUERY_MODEL2_INDEX
+results = retriever.search("a satellite image of a river", top_k=5)
+```
+
+### Model 3
+
+```python
+from satquery.models.change_detection import ChangeDetector
+
+change = ChangeDetector()  # reads SATQUERY_MODEL3_CHECKPOINT
+result = change.detect(before_image_bytes, after_image_bytes)
+```
+
+Model 3 accepts local paths, encoded image bytes, or PIL images. The raw `mask` is a NumPy array; remove it or encode it before returning JSON from an HTTP API.
+
+## Existing backend bridges
+
+`backend/SatQueryAI_backend/app/models/trained.py` exposes:
+
+- `QwenVQAModel`
+- `RemoteCLIPClassifierModel`
+- `RemoteCLIPRetrievalModel`
+- `ChangeDetectionModel`
+
+These implement the existing `BaseSpecialistModel.process(inputs) -> ModelResult` contract.
+
+Example startup injection for VQA:
 
 ```python
 from satquery.models.qwen_vqa import QwenVQA
@@ -103,30 +116,15 @@ from app.specialists.vqa_adapter import VisualVQAAdapter
 from app.services.pipeline_service import pipeline_service
 
 pipeline_service.registry.register("vqa", VisualVQAAdapter(QwenVQAModel(QwenVQA())))
-# Existing requests selecting vqa now use this model in this worker process.
 ```
 
-For Model 2, `RemoteCLIPClassifierModel(classifier, classes).process(inputs)`
-expects `{"image_bytes": encoded_bytes}`. `RemoteCLIPRetrievalModel(retriever)`
-expects `{"query": text, "top_k": 5}`. Construct the retriever with
-`RemoteCLIPRetriever(model2, index_path)` (or call `load_index(None)` to use the
-environment index path). The existing router has no retrieval/classification
-route: call these bridges from the intended backend service or add deliberate
-routing later. Do not substitute RemoteCLIP for the region-grounding specialist.
-Resolve returned image paths against the configured image-storage root; paths
-from an old Colab index may need remapping. Retrieval does not serve image bytes.
+Model 2 classification bridge expects `{"image_bytes": ...}`. Retrieval expects `{"query": ..., "top_k": 5}`.
+Model 3 bridge expects `{"before_image_bytes": ..., "after_image_bytes": ...}` and removes the non-JSON NumPy mask while preserving change percentage, threshold, regions, source size, and mask size.
 
-## Validation and release limitations
+## Integration status
 
-```bash
-python -m pip install pytest pillow pydantic pydantic-settings fastapi PyYAML
-python -m pytest -q tests
-```
+- **Model 1 code/docs/metrics:** ready on `main`; deployment still needs the trained LoRA adapter provisioned.
+- **Model 2 code/docs/metrics/classification:** ready on `main`; deployment needs the official RemoteCLIP checkpoint. Retrieval additionally needs the real restored/regenerated embedding index.
+- **Model 3 code/docs/metrics/live inference:** ready on `main`; deployment needs the trained `cd003_fixedmask_best.pt` checkpoint.
 
-CI uses CPU tensors and test doubles without downloading weights. Tests cover
-artifact failures, image conversion, generation prompt trimming, retrieval/index
-validation, backend contracts, index-building round trips, and Model 1's recorded
-68/100 result. Historical metrics are evidence from committed runs, not a new
-evaluation of this loader. Before deploying, run all three real-artifact CLI
-commands above in the target worker environment and verify its outputs and latency.
-Live model inference remains unverified until the trained artifacts are available.
+Do not commit large weights or fabricated indexes. Initialize each model once per worker process and reuse it across requests.
