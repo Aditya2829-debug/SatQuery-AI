@@ -1,0 +1,19 @@
+{
+  "model_id": "CD003",
+  "task": "bi_temporal_change_detection",
+  "architecture": "6-channel UNet-ResNet34",
+  "dataset": "LEVIR-CD+",
+  "image_size": 256,
+  "threshold": 0.75,
+  "validation_f1": 0.7380,
+  "validation_iou": 0.5848,
+  "test_precision": 0.4922,
+  "test_recall": 0.7743,
+  "test_f1": 0.6018,
+  "test_iou": 0.4304,
+  "test_loss": 0.5444,
+  "checkpoint_env": "SATQUERY_MODEL3_CHECKPOINT",
+  "checkpoint_filename": "cd003_fixedmask_best.pt",
+  "checkpoint_stored_externally": true,
+  "live_inference_verified": true
+}
