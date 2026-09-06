@@ -18,6 +18,8 @@ from app.schemas.analysis import (
     AnalysisCreateResponse,
     AnalysisDetailResponse,
     AnalysisResponseData,
+    AnalysisRunData,
+    AnalysisRunResponse,
 )
 from app.schemas.model_result import ModelResult, ModelSelectionResult
 
@@ -37,6 +39,8 @@ __all__ = [
     "AnalysisResponseData",
     "AnalysisCreateResponse",
     "AnalysisDetailResponse",
+    "AnalysisRunData",
+    "AnalysisRunResponse",
     "ModelSelectionResult",
     "ModelResult",
 ]

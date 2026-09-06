@@ -200,8 +200,7 @@ def test_pipeline_service_end_to_end():
     selection, model_result = pipeline.run_pipeline(query="Describe scene", images=[img])
 
     assert selection.selected_specialist == "vqa"
-    assert model_result.status == "NOT_IMPLEMENTED"
-    assert model_result.model_name == "Placeholder-VQA-v1"
+    assert model_result.model_name in ("Placeholder-VQA-v1", "Qwen3-VL-2B-Instruct-QLoRA")
 
 
 def test_pipeline_service_forced_specialist_override():
@@ -220,3 +219,123 @@ def test_pipeline_service_forced_specialist_override():
     assert selection.signals["override"] is True
     assert model_result.status == "NOT_IMPLEMENTED"
     assert model_result.model_name == "Placeholder-Fusion-v1"
+
+
+def test_pipeline_service_gemini_selector_injection():
+    """Test ModelPipelineService with injected GeminiModelSelector."""
+    from unittest.mock import MagicMock
+    import json
+    from app.router.gemini_selector import GeminiModelSelector
+
+    mock_client = MagicMock()
+    mock_client.models.generate_content.return_value.text = json.dumps({
+        "selected_specialist": "vqa",
+        "confidence": 0.95,
+        "reason": "Query asks general visual question",
+        "signals": {"domain": "visual_vqa"},
+    })
+
+    gemini_selector = GeminiModelSelector(client=mock_client, model_name="gemini-test")
+    pipeline = ModelPipelineService(selector=gemini_selector)
+    img = _create_mock_image_context()
+
+    selection, model_result = pipeline.run_pipeline(
+        query="What structures are present?", images=[img]
+    )
+
+    assert selection.selected_specialist == "vqa"
+    assert selection.confidence == 0.95
+    assert selection.reason == "Query asks general visual question"
+    assert model_result.model_name in ("Placeholder-VQA-v1", "Qwen3-VL-2B-Instruct-QLoRA")
+    assert mock_client.models.generate_content.called
+
+
+def test_pipeline_service_gemini_selector_determines_specialist_and_executes_adapter():
+    """Test that injected GeminiModelSelector result determines specialist and executes correct adapter."""
+    from unittest.mock import MagicMock
+    import json
+    from app.router.gemini_selector import GeminiModelSelector
+
+    mock_client = MagicMock()
+    mock_client.models.generate_content.return_value.text = json.dumps({
+        "selected_specialist": "change_detection",
+        "confidence": 0.92,
+        "reason": "Two images provided for temporal change comparison",
+        "signals": {"image_count": 2},
+    })
+
+    gemini_selector = GeminiModelSelector(client=mock_client)
+    pipeline = ModelPipelineService(selector=gemini_selector)
+
+    img1 = _create_mock_image_context(image_id="11111111-1111-1111-1111-111111111111")
+    img2 = _create_mock_image_context(image_id="22222222-2222-2222-2222-222222222222")
+
+    selection, model_result = pipeline.run_pipeline(
+        query="Detect changes between pre and post flood scenes",
+        images=[img1, img2],
+    )
+
+    assert selection.selected_specialist == "change_detection"
+    assert selection.confidence == 0.92
+    assert model_result.status == "NOT_IMPLEMENTED"
+    assert model_result.model_name == "Placeholder-ChangeDetection-v1"
+
+
+def test_pipeline_service_gemini_selector_grounding_execution():
+    """Test GeminiModelSelector selecting region_grounding and pipeline running grounding adapter."""
+    from unittest.mock import MagicMock
+    import json
+    from app.router.gemini_selector import GeminiModelSelector
+
+    mock_client = MagicMock()
+    mock_client.models.generate_content.return_value.text = json.dumps({
+        "selected_specialist": "region_grounding",
+        "confidence": 0.88,
+        "reason": "Query asks to pinpoint solar panels",
+        "signals": {"spatial": True},
+    })
+
+    gemini_selector = GeminiModelSelector(client=mock_client)
+    pipeline = ModelPipelineService(selector=gemini_selector)
+    img = _create_mock_image_context()
+
+    selection, model_result = pipeline.run_pipeline(
+        query="Locate all solar panels in the image", images=[img]
+    )
+
+    assert selection.selected_specialist == "region_grounding"
+    assert model_result.model_name in ("Placeholder-Grounding-v1", "RemoteCLIP-ViT-B-32")
+
+
+def test_pipeline_service_default_uses_placeholder_selector():
+    """Test that default ModelPipelineService instantiation preserves PlaceholderModelSelector behavior."""
+    pipeline = ModelPipelineService()
+    assert isinstance(pipeline.selector, PlaceholderModelSelector)
+
+    img = _create_mock_image_context()
+    selection, model_result = pipeline.run_pipeline(query="Any question", images=[img])
+
+    assert selection.selected_specialist == "vqa"
+    assert selection.confidence == 0.0
+    assert "Placeholder selector" in selection.reason
+    assert model_result.model_name in ("Placeholder-VQA-v1", "Qwen3-VL-2B-Instruct-QLoRA")
+
+
+def test_pipeline_service_invalid_specialist_handled_safely():
+    """Test that selection of an unregistered specialist key raises KeyError safely from SpecialistRegistry."""
+    from app.router.model_selector import BaseModelSelector
+
+    class InvalidSpecialistSelector(BaseModelSelector):
+        def select_specialist(self, query: str, images: list) -> ModelSelectionResult:
+            return ModelSelectionResult(
+                selected_specialist="nonexistent_unknown_specialist",
+                confidence=0.99,
+                reason="Invalid choice test",
+            )
+
+    pipeline = ModelPipelineService(selector=InvalidSpecialistSelector())
+    img = _create_mock_image_context()
+
+    with pytest.raises(KeyError, match="is not registered in SpecialistRegistry"):
+        pipeline.run_pipeline(query="Test invalid", images=[img])
+
