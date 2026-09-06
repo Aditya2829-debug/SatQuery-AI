@@ -1,16 +1,242 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-    <title>SatQuery AI — Remote Sensing VQA & Change Detection</title>
-  </head>
-  <body class="bg-[#0A0E13] text-[#E7EBF1] antialiased">
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SatQuery AI — Agentic Earth Observation Assistant</title>
+  
+  <!-- Playfair Display (Serif), Inter (Sans), JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+
+  <!-- geotiff.js for in-browser GeoTIFF raster parsing -->
+  <script src="https://cdn.jsdelivr.net/npm/geotiff"></script>
+
+  <!-- Modular CSS -->
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/components.css" />
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header style="position: fixed; top: 16px; left: 16px; right: 16px; z-index: 1000; display: flex; justify-content: center; pointer-events: none;">
+  <div class="container header-content dynamic-island-capsule" style="pointer-events: auto; display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 100%; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 9999px; padding: 10px 24px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);">
+    
+    <!-- Brand -->
+    <a href="#" class="brand" style="display: flex; align-items: center; gap: 10px; text-decoration: none;">
+      <div class="brand-logo" style="display: flex; align-items: center; justify-content: center; background: rgba(99, 102, 241, 0.25); border-radius: 50%; padding: 6px; color: #818cf8;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M13 7 9 3 5 7l4 4"/><path d="m17 11 4 4-4 4-4-4"/><path d="m8 12 4 4 6-6-4-4Z"/>
+        </svg>
+      </div>
+      <div class="brand-title" style="font-weight: 600; color: #fff; font-size: 0.95rem; letter-spacing: -0.01em;">SatQuery <span style="color: #818cf8;">AI</span></div>
+    </a>
+
+    <!-- Meta Controls (Master Report & Status) -->
+    <div class="header-meta" style="display: flex; align-items: center; gap: 14px;">
+      <button class="master-report-btn" onclick="window.SatApi.downloadMasterReportAndReset()" style="background: rgba(99, 102, 241, 0.15); border: 1px solid rgba(99, 102, 241, 0.4); color: #818cf8; padding: 6px 16px; border-radius: 9999px; font-size: 0.78rem; font-weight: 500; cursor: pointer; transition: all 0.2s;">
+        Generate Master Report & Reset
+      </button>
+      <div class="system-status" style="display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: #94a3b8; background: rgba(0, 0, 0, 0.25); padding: 5px 12px; border-radius: 9999px; border: 1px solid rgba(255, 255, 255, 0.06);">
+        <span class="status-dot" id="sysDot" style="width: 7px; height: 7px; background: #22c55e; border-radius: 50%; display: inline-block;"></span>
+        <span id="sysText">Online (Mock)</span>
+      </div>
+    </div>
+
+  </div>
+</header>
+
+  <!-- MAIN CHAT CONTAINER -->
+  <main class="container chat-layout">
+    
+    <!-- Scrollable Chat Feed -->
+    <div class="chat-feed" id="chatFeed">
+      
+      <!-- Initial System Prompt: Setup -->
+      <div class="chat-block system-block">
+        <div class="chat-content">
+          <div class="chat-text">Welcome to SatQuery AI. Please configure your analysis parameters and upload your imagery to begin.</div>
+          
+          <!-- 1. INPUT TYPE SELECTOR -->
+          <section class="section-block inline-widget">
+            <div class="mode-grid-wrap">
+              <div class="mode-grid capsule-grid">
+                
+                <div class="mode-card capsule selected" onclick="window.SatApp.handleModeChange('single')" id="mode-single">
+                  <div class="mode-title-wrap">
+                    <div class="mode-title">Single Image</div>
+                  </div>
+                  <div class="mode-tooltip">
+                    <div class="mode-desc">Analyze optical, multispectral, or SAR image for VQA, captioning, and object grounding.</div>
+                    <span class="mode-badge">1 Image (GeoTIFF / PNG)</span>
+                  </div>
+                </div>
+
+                <div class="mode-card capsule" onclick="window.SatApp.handleModeChange('bitemporal')" id="mode-bitemporal">
+                  <div class="mode-title-wrap">
+                    <div class="mode-title">Bi-temporal Pair</div>
+                  </div>
+                  <div class="mode-tooltip">
+                    <div class="mode-desc">Compare two co-registered scenes from different dates (T1 vs T2) for change detection.</div>
+                    <span class="mode-badge">2 Images (Date 1 & Date 2)</span>
+                  </div>
+                </div>
+
+                <div class="mode-card capsule" onclick="window.SatApp.handleModeChange('crossmodal')" id="mode-crossmodal">
+                  <div class="mode-title-wrap">
+                    <div class="mode-title">Cross-modal Pair</div>
+                  </div>
+                  <div class="mode-tooltip">
+                    <div class="mode-desc">Joint multimodal inference fusing Optical context with SAR backscatter penetration.</div>
+                    <span class="mode-badge">2 Images (Optical + SAR)</span>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </section>
+
+        </div>
+      </div>
+      
+      <!-- Dynamic chat messages will be injected here by JS -->
+    </div>
+  </main>
+
+  <!-- TEMPLATES (Hidden, used by JS to generate chat bubbles) -->
+  <template id="userMessageTemplate">
+    <div class="chat-block user-block">
+      <div class="chat-content user-query-container">
+        <div class="user-attached-images"></div>
+        <div class="chat-text user-query-text"></div>
+      </div>
+      <div class="chat-avatar user-avatar">U</div>
+    </div>
+  </template>
+
+  <template id="aiResponseTemplate">
+    <div class="chat-block ai-block">
+      <div class="chat-avatar ai-avatar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M13 7 9 3 5 7l4 4"/><path d="m17 11 4 4-4 4-4-4"/><path d="m8 12 4 4 6-6-4-4Z"/>
+        </svg>
+      </div>
+      <div class="chat-content">
+        <div class="chat-text status-text">Analyzing scene...</div>
+        
+        <!-- Results Display & Audit Summary -->
+        <div class="results-section dynamic-section" style="display: none;">
+          <div class="results-grid">
+            <div class="card canvas-card">
+              <div class="viewer-toolbar">
+                <div class="tabs-group">
+                  <button class="tab-btn active tab-overlay">Annotated</button>
+                  <button class="tab-btn tab-original">Original</button>
+                  <button class="tab-btn tab-mask">Heatmap</button>
+                </div>
+                <span style="font-size: 0.75rem; color: var(--text-secondary);" class="layer-desc">Layer: Grounding Overlay</span>
+              </div>
+              <div class="canvas-wrapper">
+                <canvas class="visual-canvas"></canvas>
+              </div>
+              <div class="evidence-meta-bar">
+                <span class="meta-dims">Dims: --</span>
+                <span>Projection: EPSG:4326 / WGS84</span>
+              </div>
+            </div>
+            <div class="card answer-panel">
+              <div>
+                <div class="section-title" style="font-size: 0.82rem;">Synthesized Answer</div>
+                <p class="main-answer-text answer-text">--</p>
+              </div>
+              <div>
+                <div class="confidence-meta"><span>Confidence</span><span class="conf-val">0%</span></div>
+                <div class="confidence-bar-track"><div class="confidence-bar-fill conf-fill"></div></div>
+              </div>
+              <div>
+                <div class="section-title" style="font-size: 0.75rem;">Deployed Models</div>
+                <div class="model-tags"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Execution Audit Summary & Download Report Card -->
+          <div class="card audit-summary-card" style="margin-top: 16px; padding: 16px;">
+            <div class="section-title" style="font-size: 0.85rem; margin-bottom: 12px;">5. EXECUTION AUDIT SUMMARY</div>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px;">
+              <div style="background: var(--bg-tertiary, #1e1e24); padding: 10px; border-radius: 8px;">
+                <div style="font-size: 0.7rem; color: var(--text-secondary);">TASK</div>
+                <div style="font-weight: 600; font-size: 0.9rem;" id="auditTask">SINGLE ANALYSIS</div>
+              </div>
+              <div style="background: var(--bg-tertiary, #1e1e24); padding: 10px; border-radius: 8px;">
+                <div style="font-size: 0.7rem; color: var(--text-secondary);">LATENCY</div>
+                <div style="font-weight: 600; font-size: 0.9rem;" id="auditLatency">1.24s</div>
+              </div>
+              <div style="background: var(--bg-tertiary, #1e1e24); padding: 10px; border-radius: 8px;">
+                <div style="font-size: 0.7rem; color: var(--text-secondary);">CONFIDENCE</div>
+                <div style="font-weight: 600; font-size: 0.9rem;" id="auditConf">94%</div>
+              </div>
+            </div>
+            <div style="display: flex; justify-content: flex-end;">
+              <button class="btn-primary audit-download-btn" style="padding: 8px 16px; font-size: 0.85rem;" onclick="window.SatApi.downloadReport()">Download Intelligence Report (PDF)</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </template>
+
+  <!-- FIXED BOTTOM QUERY BAR & UPLOAD ZONE -->
+  <div class="fixed-query-bar">
+    <div class="container">
+      <div class="query-capsule-wrap">
+        
+        <div class="upload-capsule-wrap" style="width: 100%; margin-bottom: 4px;">
+          <div class="upload-grid single" id="uploadZoneContainer"></div>
+        </div>
+
+        <div class="preset-chips-container" id="presetChips">
+          <span class="preset-label">Prompts:</span>
+          <span class="preset-chip">Describe the land-cover and major objects visible in this image.</span>
+          <span class="preset-chip">Highlight the primary water body and calculate estimated coverage.</span>
+          <span class="preset-chip">Identify industrial buildings and cargo ships docked at the port.</span>
+        </div>
+
+        <div class="query-capsule">
+          <input
+            type="text"
+            id="queryInput"
+            class="query-capsule-input"
+            placeholder="Ask anything about the satellite imagery..."
+            oninput="window.SatApp.validateState()"
+          />
+          <button class="btn-primary query-lg-submit" id="analyzeBtn" disabled onclick="window.SatApp.runAnalysis()">
+            <span id="btnText">Analyze Scene</span>
+          </button>
+        </div>
+
+        <span class="helper-text query-lg-hint" id="statusHint">Upload required images and enter a query.</span>
+      </div>
+    </div>
+  </div>
+  <!-- Full-Screen Image Lightbox Modal -->
+  <div id="imageLightbox" class="lightbox-modal" onclick="this.style.display='none'">
+    <span class="lightbox-close">&times;</span>
+    <img class="lightbox-content" id="lightboxImg">
+  </div>
+
+  <!-- Toast Mount -->
+  <div class="toast-container" id="toasts"></div>
+
+  <!-- Modular Scripts -->
+  <script src="js/config.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/agentTrace.js"></script>
+  <script src="js/canvasViewer.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+</body>
 </html>
