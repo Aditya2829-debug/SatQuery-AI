@@ -7,6 +7,7 @@ from app.models.placeholders import (
     PlaceholderOpticalSARFusionModel,
     PlaceholderVQAModel,
 )
+from app.models.trained import OpticalSARFusionModel
 
 __all__ = [
     "BaseSpecialistModel",
@@ -14,4 +15,5 @@ __all__ = [
     "PlaceholderGroundingModel",
     "PlaceholderChangeDetectionModel",
     "PlaceholderOpticalSARFusionModel",
+    "OpticalSARFusionModel",
 ]
