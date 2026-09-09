@@ -136,6 +136,25 @@ class AnalysisRepository:
 
         return None
 
+    def update_workflow_type(self, analysis_id: str, workflow_type: str) -> Optional[AnalysisResponseData]:
+        """
+        Updates the workflow_type for an existing analysis record in memory store and Supabase.
+        """
+        if analysis_id in self._analyses_store:
+            self._analyses_store[analysis_id].workflow_type = workflow_type
+
+        client = get_supabase_client()
+        if client:
+            try:
+                client.table(self.analyses_table).update({"workflow_type": workflow_type}).eq("analysis_id", analysis_id).execute()
+                logger.info(f"Updated workflow_type to '{workflow_type}' for analysis {analysis_id} in Supabase.")
+            except Exception as e:
+                logger.error(f"Failed to update workflow_type for analysis {analysis_id} in Supabase: {e}")
+                raise
+
+        return self._analyses_store.get(analysis_id)
+
 
 # Global singleton instance
 analysis_repository = AnalysisRepository()
+

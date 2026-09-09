@@ -36,10 +36,19 @@ class SpecialistRegistry:
 
 
 def create_default_specialist_registry() -> SpecialistRegistry:
-    """Factory creating a SpecialistRegistry with default placeholder adapters."""
+    """Factory creating a SpecialistRegistry with default adapters.
+
+    The VQA adapter uses real QwenVQAModel when SATQUERY_MODEL1_ADAPTER is set.
+    The RegionGrounding adapter uses real RemoteCLIPGroundingModel when SATQUERY_MODEL2_CHECKPOINT is set.
+    The ChangeDetection adapter uses real CD003-UNet-ResNet34 when SATQUERY_MODEL3_CHECKPOINT is set.
+    All other specialists fall back to their placeholder models until further integration.
+    """
+    from app.models.loader import get_change_detection_model, get_grounding_model, get_vqa_model  # local import avoids circular deps
+
     registry = SpecialistRegistry()
-    registry.register("vqa", VisualVQAAdapter())
-    registry.register("region_grounding", RegionGroundingAdapter())
-    registry.register("change_detection", ChangeDetectionAdapter())
+    registry.register("vqa", VisualVQAAdapter(model=get_vqa_model()))
+    registry.register("region_grounding", RegionGroundingAdapter(model=get_grounding_model()))
+    registry.register("change_detection", ChangeDetectionAdapter(model=get_change_detection_model()))
     registry.register("optical_sar_fusion", OpticalSARFusionAdapter())
     return registry
+

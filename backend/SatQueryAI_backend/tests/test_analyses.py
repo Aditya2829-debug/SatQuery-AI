@@ -41,8 +41,8 @@ def _create_and_store_mock_image() -> str:
     return img_id
 
 
-def test_create_analysis_single_image_vqa():
-    """Test 1 image request automatically chooses workflow_type='vqa' and sets status='pending'."""
+def test_create_analysis_single_image_pending():
+    """Test 1 image request initializes workflow_type='pending' and status='pending'."""
     img_id = _create_and_store_mock_image()
     payload = {
         "image_ids": [img_id],
@@ -55,7 +55,7 @@ def test_create_analysis_single_image_vqa():
     assert data["status"] == "success"
     assert "data" in data
     res_data = data["data"]
-    assert res_data["workflow_type"] == "vqa"
+    assert res_data["workflow_type"] == "pending"
     assert res_data["status"] == "pending"
     assert res_data["query"] == payload["query"]
     assert res_data["image_ids"] == [img_id]
@@ -65,8 +65,8 @@ def test_create_analysis_single_image_vqa():
     assert "created_at" in res_data
 
 
-def test_create_analysis_two_images_change_detection():
-    """Test 2 images request automatically chooses workflow_type='change_detection'."""
+def test_create_analysis_two_images_pending():
+    """Test 2 images request initializes workflow_type='pending'."""
     img1 = _create_and_store_mock_image()
     img2 = _create_and_store_mock_image()
     payload = {
@@ -79,7 +79,7 @@ def test_create_analysis_two_images_change_detection():
     data = response.json()
     assert data["status"] == "success"
     res_data = data["data"]
-    assert res_data["workflow_type"] == "change_detection"
+    assert res_data["workflow_type"] == "pending"
     assert res_data["status"] == "pending"
     assert res_data["query"] == payload["query"]
     assert set(res_data["image_ids"]) == {img1, img2}
@@ -142,8 +142,8 @@ def test_create_analysis_non_existent_image_id():
     assert missing_id in data["message"]
 
 
-def test_create_analysis_unsupported_image_count():
-    """Test requesting > 2 images returns HTTP 422."""
+def test_create_analysis_multiple_images_accepted_as_pending():
+    """Test requesting 3 images is successfully accepted with workflow_type='pending'."""
     img1 = _create_and_store_mock_image()
     img2 = _create_and_store_mock_image()
     img3 = _create_and_store_mock_image()
@@ -152,9 +152,11 @@ def test_create_analysis_unsupported_image_count():
         "query": "Analyze three images.",
     }
     response = client.post("/api/v1/analyses", json=payload)
-    assert response.status_code == 422
+    assert response.status_code == 201
     data = response.json()
-    assert data["status"] == "error"
+    assert data["status"] == "success"
+    assert data["data"]["workflow_type"] == "pending"
+    assert len(data["data"]["image_ids"]) == 3
 
 
 def test_compensating_cleanup_on_bridge_failure():
@@ -250,7 +252,7 @@ def test_get_analysis_by_id_success():
     assert res_data["analysis_id"] == analysis_id
     assert res_data["image_ids"] == [img_id]
     assert res_data["query"] == create_payload["query"]
-    assert res_data["workflow_type"] == "vqa"
+    assert res_data["workflow_type"] == "pending"
     assert res_data["status"] == "pending"
     assert res_data["started_at"] is None
     assert res_data["completed_at"] is None
@@ -325,4 +327,210 @@ def test_get_analysis_by_id_from_supabase_db():
     assert record.analysis_id == test_id
     assert record.image_ids == [test_img]
     assert record.workflow_type == "change_detection"
+
+
+def test_run_analysis_single_image_vqa():
+    """Test POST /api/v1/analyses/{analysis_id}/run with 1 image executes VQA adapter."""
+    import json
+    img_id = _create_and_store_mock_image()
+    create_res = client.post(
+        "/api/v1/analyses",
+        json={"image_ids": [img_id], "query": "What buildings are in this scene?"},
+    )
+    assert create_res.status_code == 201
+    analysis_id = create_res.json()["data"]["analysis_id"]
+
+    mock_client = MagicMock()
+    mock_client.models.generate_content.return_value.text = json.dumps({
+        "selected_specialist": "vqa",
+        "confidence": 0.95,
+        "reason": "Single image visual question",
+        "signals": {"domain": "visual_vqa"},
+    })
+
+    with patch("app.router.gemini_selector.genai.Client", return_value=mock_client):
+        response = client.post(f"/api/v1/analyses/{analysis_id}/run")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "success"
+    res_data = data["data"]
+    assert res_data["analysis_id"] == analysis_id
+    assert res_data["query"] == "What buildings are in this scene?"
+    assert res_data["selected_specialist"] == "vqa"
+    assert res_data["confidence"] == 0.95
+    assert res_data["reason"] == "Single image visual question"
+    assert res_data["model_result"]["model_name"] in (
+        "Placeholder-VQA-v1",
+        "Qwen3-VL-2B-Instruct-QLoRA",
+    )
+
+
+def test_run_analysis_two_images_change_detection():
+    """Test POST /api/v1/analyses/{analysis_id}/run with 2 images selects change_detection adapter."""
+    import json
+    img1 = _create_and_store_mock_image()
+    img2 = _create_and_store_mock_image()
+    create_res = client.post(
+        "/api/v1/analyses",
+        json={"image_ids": [img1, img2], "query": "Compare temporal changes between these images."},
+    )
+    assert create_res.status_code == 201
+    analysis_id = create_res.json()["data"]["analysis_id"]
+
+    mock_client = MagicMock()
+    mock_client.models.generate_content.return_value.text = json.dumps({
+        "selected_specialist": "change_detection",
+        "confidence": 0.92,
+        "reason": "Two temporal images submitted for comparison",
+        "signals": {"image_count": 2},
+    })
+
+    with patch("app.router.gemini_selector.genai.Client", return_value=mock_client):
+        response = client.post(f"/api/v1/analyses/{analysis_id}/run")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "success"
+    res_data = data["data"]
+    assert res_data["analysis_id"] == analysis_id
+    assert res_data["selected_specialist"] == "change_detection"
+    assert res_data["confidence"] == 0.92
+    assert res_data["model_result"]["status"] == "NOT_IMPLEMENTED"
+    assert res_data["model_result"]["model_name"] == "Placeholder-ChangeDetection-v1"
+
+
+def test_run_analysis_region_grounding():
+    """Test POST /api/v1/analyses/{analysis_id}/run when Gemini selects region_grounding."""
+    import json
+    img_id = _create_and_store_mock_image()
+    create_res = client.post(
+        "/api/v1/analyses",
+        json={"image_ids": [img_id], "query": "Locate the solar farm bounding box."},
+    )
+    assert create_res.status_code == 201
+    analysis_id = create_res.json()["data"]["analysis_id"]
+
+    mock_client = MagicMock()
+    mock_client.models.generate_content.return_value.text = json.dumps({
+        "selected_specialist": "region_grounding",
+        "confidence": 0.88,
+        "reason": "Query asks to ground spatial objects",
+        "signals": {"spatial": True},
+    })
+
+    with patch("app.router.gemini_selector.genai.Client", return_value=mock_client):
+        response = client.post(f"/api/v1/analyses/{analysis_id}/run")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "success"
+    res_data = data["data"]
+    assert res_data["model_result"]["model_name"] in (
+        "Placeholder-Grounding-v1",
+        "RemoteCLIP-ViT-B-32",
+    )
+
+
+def test_run_analysis_not_found():
+    """Test POST /api/v1/analyses/{analysis_id}/run returns HTTP 404 for non-existent analysis_id."""
+    missing_id = str(uuid.uuid4())
+    response = client.post(f"/api/v1/analyses/{missing_id}/run")
+    assert response.status_code == 404
+    data = response.json()
+    assert data["status"] == "error"
+    assert data["error_type"] == "NotFoundException"
+    assert missing_id in data["message"]
+
+
+def test_run_analysis_no_linked_images():
+    """Test POST /api/v1/analyses/{analysis_id}/run returns HTTP 422 if analysis has no linked images."""
+    analysis_id = str(uuid.uuid4())
+    analysis_record = AnalysisResponseData(
+        analysis_id=analysis_id,
+        image_ids=[],
+        query="Test query without images",
+        workflow_type="vqa",
+        status="pending",
+        created_at=datetime.now(timezone.utc),
+    )
+    analysis_repository.save_analysis(analysis_record)
+
+    response = client.post(f"/api/v1/analyses/{analysis_id}/run")
+    assert response.status_code == 422
+    data = response.json()
+    assert data["status"] == "error"
+    assert data["error_type"] == "ValidationException"
+    assert "no associated satellite images" in data["message"]
+
+
+def test_run_analysis_updates_workflow_type_in_db():
+    """Test that POST /analyses/{analysis_id}/run updates workflow_type from 'pending' to Gemini-selected specialist in DB."""
+    import json
+    img_id = _create_and_store_mock_image()
+    create_res = client.post(
+        "/api/v1/analyses",
+        json={"image_ids": [img_id], "query": "Find building boundaries"},
+    )
+    assert create_res.status_code == 201
+    analysis_id = create_res.json()["data"]["analysis_id"]
+
+    # Verify initial workflow_type is 'pending'
+    get_initial = client.get(f"/api/v1/analyses/{analysis_id}")
+    assert get_initial.json()["data"]["workflow_type"] == "pending"
+
+    mock_client = MagicMock()
+    mock_client.models.generate_content.return_value.text = json.dumps({
+        "selected_specialist": "region_grounding",
+        "confidence": 0.91,
+        "reason": "Building boundary localization query",
+        "signals": {},
+    })
+
+    with patch("app.router.gemini_selector.genai.Client", return_value=mock_client):
+        run_res = client.post(f"/api/v1/analyses/{analysis_id}/run")
+        assert run_res.status_code == 200
+        assert run_res.json()["data"]["selected_specialist"] == "region_grounding"
+
+    # Verify subsequent GET /analyses/{analysis_id} returns updated workflow_type='region_grounding'
+    get_updated = client.get(f"/api/v1/analyses/{analysis_id}")
+    assert get_updated.status_code == 200
+    assert get_updated.json()["data"]["workflow_type"] == "region_grounding"
+
+
+def test_run_analysis_gemini_failure_preserves_pending_workflow_type():
+    """Test that if Gemini selection fails, workflow_type remains 'pending'."""
+    img_id = _create_and_store_mock_image()
+    create_res = client.post(
+        "/api/v1/analyses",
+        json={"image_ids": [img_id], "query": "What is in this image?"},
+    )
+    assert create_res.status_code == 201
+    analysis_id = create_res.json()["data"]["analysis_id"]
+
+    mock_client = MagicMock()
+    mock_client.models.generate_content.side_effect = Exception("Gemini API Connection Failed")
+
+    with patch("app.router.gemini_selector.genai.Client", return_value=mock_client):
+        run_res = client.post(f"/api/v1/analyses/{analysis_id}/run")
+        # GeminiModelSelector catches API errors and raises ValidationException (HTTP 422)
+        assert run_res.status_code == 422
+
+    # Verify workflow_type was NOT updated and remains 'pending'
+    get_after_fail = client.get(f"/api/v1/analyses/{analysis_id}")
+    assert get_after_fail.status_code == 200
+    assert get_after_fail.json()["data"]["workflow_type"] == "pending"
+
+
+def test_run_analysis_invalid_uuid_format():
+    """Test POST /api/v1/analyses/{analysis_id}/run returns HTTP 422 for malformed UUID."""
+    malformed_id = "invalid-uuid-string"
+    response = client.post(f"/api/v1/analyses/{malformed_id}/run")
+    assert response.status_code == 422
+    data = response.json()
+    assert data["status"] == "error"
+    assert data["error_type"] == "ValidationException"
+
+
+
 

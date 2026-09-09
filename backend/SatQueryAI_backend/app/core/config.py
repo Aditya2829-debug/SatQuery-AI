@@ -21,6 +21,18 @@ class Settings(BaseSettings):
     SUPABASE_KEY: str = "your-supabase-anon-or-service-role-key"
     SUPABASE_STORAGE_BUCKET: str = "satellite-images"
     SUPABASE_TABLE_NAME: str = "satellite_images"
+    GEMINI_API_KEY: str = "[ENCRYPTION_KEY]"
+    GEMINI_MODEL_NAME: str = "gemini-3.6-flash"
+
+    # Path to QwenVQA LoRA adapter directory (leave empty to use placeholder)
+    SATQUERY_MODEL1_ADAPTER: str = ""
+
+    # Path to RemoteCLIP model checkpoint and EuroSAT index (leave empty to use placeholder)
+    SATQUERY_MODEL2_CHECKPOINT: str = ""
+    SATQUERY_MODEL2_INDEX: str = ""
+
+    # Path to Change Detection model checkpoint (leave empty to use placeholder)
+    SATQUERY_MODEL3_CHECKPOINT: str = ""
 
     # Image upload configuration
     MAX_IMAGE_SIZE_BYTES: int = 10 * 1024 * 1024  # 10 MB
