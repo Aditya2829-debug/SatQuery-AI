@@ -172,3 +172,22 @@ class ChangeDetectionModel(BaseSpecialistModel):
             },
         )
 
+
+class OpticalSARFusionModel(BaseSpecialistModel):
+    def __init__(self, predictor):
+        super().__init__("FusionUNet-OpticalSAR")
+        self.predictor = predictor
+
+    def process(self, inputs):
+        prediction = self.predictor.predict(inputs["fusion_tensor"])
+        if hasattr(prediction, "tolist"):
+            prediction = prediction.tolist()
+        return ModelResult(
+            status="success",
+            result=prediction,
+            model_name=self.model_name,
+            confidence=None,
+            limitations=[
+                "Input must be preprocessed to the 6-channel training tensor (B4,B3,B2,B8,VV,VH)."
+            ],
+        )
