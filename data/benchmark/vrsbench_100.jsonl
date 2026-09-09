@@ -1,0 +1,100 @@
+{"id": 0, "image": "00002_0000.png", "question_id": 1, "question": "What is the main structure in the center of the image?", "answer": "expressway-toll-station", "question_type": "scene type", "source": "vrsbench"}
+{"id": 1, "image": "00002_0000.png", "question_id": 2, "question": "Are there any visible vehicles near the toll station?", "answer": "yes", "question_type": "object existence", "source": "vrsbench"}
+{"id": 2, "image": "00002_0000.png", "question_id": 3, "question": "How many expressway-toll-stations are visible in the image?", "answer": "1", "question_type": "object quantity", "source": "vrsbench"}
+{"id": 3, "image": "00002_0000.png", "question_id": 4, "question": "Does the image show urban or rural setting?", "answer": "rural", "question_type": "scene type", "source": "vrsbench"}
+{"id": 4, "image": "00003_0000.png", "question_id": 1, "question": "What is the main type of area depicted in the image?", "answer": "urban", "question_type": "scene type", "source": "vrsbench"}
+{"id": 5, "image": "00003_0000.png", "question_id": 2, "question": "What type of transportation facility is present in the image?", "answer": "train station", "question_type": "object category", "source": "vrsbench"}
+{"id": 6, "image": "00003_0000.png", "question_id": 3, "question": "How many train stations are there in the image?", "answer": "1", "question_type": "object quantity", "source": "vrsbench"}
+{"id": 7, "image": "00003_0000.png", "question_id": 4, "question": "Is the train station located in the top, middle, or bottom of the image?", "answer": "middle", "question_type": "object position", "source": "vrsbench"}
+{"id": 8, "image": "00003_0000.png", "question_id": 5, "question": "Do the tracks at the train station extend eastward?", "answer": "yes", "question_type": "object direction", "source": "vrsbench"}
+{"id": 9, "image": "00004_0000.png", "question_id": 1, "question": "What is the primary structure in the center of the image?", "answer": "chimney", "question_type": "scene type", "source": "vrsbench"}
+{"id": 10, "image": "00004_0000.png", "question_id": 2, "question": "What is the shape of the chimney's opening?", "answer": "circular", "question_type": "object shape", "source": "vrsbench"}
+{"id": 11, "image": "00005_0000.png", "question_id": 1, "question": "What is the main structure to the right in the image?", "answer": "storagetank", "question_type": "object category", "source": "vrsbench"}
+{"id": 12, "image": "00005_0000.png", "question_id": 2, "question": "Is there a vehicle in the center of the image?", "answer": "yes", "question_type": "object existence", "source": "vrsbench"}
+{"id": 13, "image": "00005_0000.png", "question_id": 3, "question": "How many storage tanks are visible in the image?", "answer": "1", "question_type": "object quantity", "source": "vrsbench"}
+{"id": 14, "image": "00005_0000.png", "question_id": 4, "question": "What is the shape of the storage tank?", "answer": "cylindrical", "question_type": "object shape", "source": "vrsbench"}
+{"id": 15, "image": "00005_0000.png", "question_id": 5, "question": "What is the color of the area surrounding the central vehicle?", "answer": "lighter", "question_type": "object color", "source": "vrsbench"}
+{"id": 16, "image": "00006_0000.png", "question_id": 1, "question": "What is the main object in the water adjacent to the platforms?", "answer": "ship", "question_type": "object category", "source": "vrsbench"}
+{"id": 17, "image": "00006_0000.png", "question_id": 2, "question": "How is the main object positioned in relation to the floating platforms?", "answer": "adjacent south", "question_type": "object position", "source": "vrsbench"}
+{"id": 18, "image": "00006_0000.png", "question_id": 3, "question": "Is the main object in the image unique?", "answer": "yes", "question_type": "object existence", "source": "vrsbench"}
+{"id": 19, "image": "00008_0000.png", "question_id": 1, "question": "What type of vehicles are predominant in this image?", "answer": "airplanes", "question_type": "object category", "source": "vrsbench"}
+{"id": 20, "image": "00008_0000.png", "question_id": 2, "question": "How many airplanes can be seen in the image?", "answer": "4", "question_type": "object quantity", "source": "vrsbench"}
+{"id": 21, "image": "00008_0000.png", "question_id": 3, "question": "Is there a vehicle present in the image?", "answer": "yes", "question_type": "object existence", "source": "vrsbench"}
+{"id": 22, "image": "00008_0000.png", "question_id": 4, "question": "Where is the small vehicle located in terms of image position?", "answer": "bottom-right", "question_type": "object position", "source": "vrsbench"}
+{"id": 23, "image": "00008_0000.png", "question_id": 5, "question": "Is the vehicle in the image unique compared to other objects?", "answer": "yes", "question_type": "reasoning", "source": "vrsbench"}
+{"id": 24, "image": "00009_0000.png", "question_id": 1, "question": "What is the main sports facility visible in the image?", "answer": "ground track and field", "question_type": "object category", "source": "vrsbench"}
+{"id": 25, "image": "00009_0000.png", "question_id": 2, "question": "What color is the track surrounding the sports field?", "answer": "reddish", "question_type": "object color", "source": "vrsbench"}
+{"id": 26, "image": "00009_0000.png", "question_id": 3, "question": "Are any buildings visible in the image?", "answer": "no", "question_type": "object existence", "source": "vrsbench"}
+{"id": 27, "image": "00010_0000.png", "question_id": 1, "question": "What kind of structure is prominently featured in this image?", "answer": "dam", "question_type": "object existence", "source": "vrsbench"}
+{"id": 28, "image": "00010_0000.png", "question_id": 2, "question": "Is the dam situated horizontally or vertically in the image?", "answer": "horizontally", "question_type": "object position", "source": "vrsbench"}
+{"id": 29, "image": "00010_0000.png", "question_id": 3, "question": "What is visible to the north of the dam?", "answer": "water body", "question_type": "object position", "source": "vrsbench"}
+{"id": 30, "image": "00011_0000.png", "question_id": 1, "question": "What is the setting of the image?", "answer": "airport", "question_type": "scene type", "source": "vrsbench"}
+{"id": 31, "image": "00011_0000.png", "question_id": 2, "question": "What object is at the center of the image?", "answer": "airplane", "question_type": "object position", "source": "vrsbench"}
+{"id": 32, "image": "00011_0000.png", "question_id": 4, "question": "Are there any visible road markings?", "answer": "yes", "question_type": "object existence", "source": "vrsbench"}
+{"id": 33, "image": "00011_0000.png", "question_id": 5, "question": "Is the airplane unique in this image?", "answer": "yes", "question_type": "object existence", "source": "vrsbench"}
+{"id": 34, "image": "00012_0000.png", "question_id": 2, "question": "How many vehicles are visible in the image?", "answer": "4", "question_type": "object quantity", "source": "vrsbench"}
+{"id": 35, "image": "00012_0000.png", "question_id": 3, "question": "What is the main structure visible in the image?", "answer": "parking lot", "question_type": "scene type", "source": "vrsbench"}
+{"id": 36, "image": "00012_0000.png", "question_id": 4, "question": "Is there a vehicle located in the bottom left quadrant of the image?", "answer": "yes", "question_type": "object existence", "source": "vrsbench"}
+{"id": 37, "image": "00013_0000.png", "question_id": 1, "question": "What is the main structure in this image?", "answer": "expressway service area", "question_type": "scene type", "source": "vrsbench"}
+{"id": 38, "image": "00013_0000.png", "question_id": 2, "question": "How many vehicles are visible in the image?", "answer": "2", "question_type": "object quantity", "source": "vrsbench"}
+{"id": 39, "image": "00013_0000.png", "question_id": 3, "question": "Is the image color or grayscale?", "answer": "color", "question_type": "image", "source": "vrsbench"}
+{"id": 40, "image": "00013_0000.png", "question_id": 4, "question": "Are trees present near the service area?", "answer": "yes", "question_type": "object existence", "source": "vrsbench"}
+{"id": 41, "image": "00013_0000.png", "question_id": 5, "question": "Where is the vehicle with the bottom-most position located?", "answer": "bottom-middle", "question_type": "object position", "source": "vrsbench"}
+{"id": 42, "image": "00013_0000.png", "question_id": 6, "question": "What is the relative position of the right-most vehicle?", "answer": "middle-right", "question_type": "object position", "source": "vrsbench"}
+{"id": 43, "image": "00015_0000.png", "question_id": 2, "question": "How many airplanes are visible in the image?", "answer": "2", "question_type": "object quantity", "source": "vrsbench"}
+{"id": 44, "image": "00015_0000.png", "question_id": 3, "question": "Is there any unique vehicle in the image?", "answer": "yes", "question_type": "object existence", "source": "vrsbench"}
+{"id": 45, "image": "00015_0000.png", "question_id": 4, "question": "What object is positioned between the two airplanes?", "answer": "vehicle", "question_type": "object position", "source": "vrsbench"}
+{"id": 46, "image": "00015_0000.png", "question_id": 5, "question": "Which airplane is larger?", "answer": "bottom-right", "question_type": "object size", "source": "vrsbench"}
+{"id": 47, "image": "00015_0000.png", "question_id": 6, "question": "What is the relative position of the bottom-right airplane?", "answer": "bottom-most", "question_type": "object position", "source": "vrsbench"}
+{"id": 48, "image": "00017_0000.png", "question_id": 1, "question": "What sport is the featured facility designed for?", "answer": "athletics", "question_type": "reasoning", "source": "vrsbench"}
+{"id": 49, "image": "00017_0000.png", "question_id": 2, "question": "Are there any buildings visible adjacent to the track?", "answer": "yes", "question_type": "object existence", "source": "vrsbench"}
+{"id": 50, "image": "00017_0000.png", "question_id": 3, "question": "What shape is the track?", "answer": "oval", "question_type": "object shape", "source": "vrsbench"}
+{"id": 51, "image": "00018_0000.png", "question_id": 1, "question": "What is the main object in the image?", "answer": "stadium", "question_type": "object category", "source": "vrsbench"}
+{"id": 52, "image": "00018_0000.png", "question_id": 2, "question": "What is the shape of the stadium?", "answer": "oval", "question_type": "object shape", "source": "vrsbench"}
+{"id": 53, "image": "00018_0000.png", "question_id": 3, "question": "What color is the field inside the stadium?", "answer": "green", "question_type": "object color", "source": "vrsbench"}
+{"id": 54, "image": "00019_0000.png", "question_id": 1, "question": "What type of area is depicted in the image?", "answer": "urban", "question_type": "scene type", "source": "vrsbench"}
+{"id": 55, "image": "00019_0000.png", "question_id": 2, "question": "What color are the rooftops of the houses?", "answer": "red", "question_type": "object color", "source": "vrsbench"}
+{"id": 56, "image": "00019_0000.png", "question_id": 3, "question": "Is there a stadium visible in the image?", "answer": "yes", "question_type": "object existence", "source": "vrsbench"}
+{"id": 57, "image": "00019_0000.png", "question_id": 4, "question": "What shape is the stadium?", "answer": "oval", "question_type": "object shape", "source": "vrsbench"}
+{"id": 58, "image": "00019_0000.png", "question_id": 5, "question": "What is the predominant color of the stadium's field?", "answer": "green", "question_type": "object color", "source": "vrsbench"}
+{"id": 59, "image": "00021_0000.png", "question_id": 1, "question": "What is the main structure visible in the image?", "answer": "train station", "question_type": "scene type", "source": "vrsbench"}
+{"id": 60, "image": "00021_0000.png", "question_id": 2, "question": "Does the image show a rural or an urban area?", "answer": "urban", "question_type": "rural or urban", "source": "vrsbench"}
+{"id": 61, "image": "00021_0000.png", "question_id": 4, "question": "Are roads present around the buildings?", "answer": "yes", "question_type": "object existence", "source": "vrsbench"}
+{"id": 62, "image": "00021_0000.png", "question_id": 5, "question": "Is the train station visible on the larger side?", "answer": "yes", "question_type": "object position", "source": "vrsbench"}
+{"id": 63, "image": "00023_0000.png", "question_id": 1, "question": "What is the main structure depicted in the image?", "answer": "airport", "question_type": "scene type", "source": "vrsbench"}
+{"id": 64, "image": "00023_0000.png", "question_id": 2, "question": "Is there a ground track field present in the image?", "answer": "yes", "question_type": "object existence", "source": "vrsbench"}
+{"id": 65, "image": "00023_0000.png", "question_id": 3, "question": "How many unique objects are identified in the image?", "answer": "2", "question_type": "object quantity", "source": "vrsbench"}
+{"id": 66, "image": "00024_0000.png", "question_id": 1, "question": "What is the shape of the stadium?", "answer": "oval", "question_type": "object shape", "source": "vrsbench"}
+{"id": 67, "image": "00024_0000.png", "question_id": 2, "question": "Is there a ground track field inside the stadium?", "answer": "yes", "question_type": "object existence", "source": "vrsbench"}
+{"id": 68, "image": "00024_0000.png", "question_id": 4, "question": "What visible markings are present on the ground track field?", "answer": "athletic lines", "question_type": "object existence", "source": "vrsbench"}
+{"id": 69, "image": "00024_0000.png", "question_id": 5, "question": "Are there nearby structures surrounding the stadium?", "answer": "yes", "question_type": "object existence", "source": "vrsbench"}
+{"id": 70, "image": "00025_0000.png", "question_id": 1, "question": "What is the main structure visible in the image?", "answer": "airport", "question_type": "scene type", "source": "vrsbench"}
+{"id": 71, "image": "00025_0000.png", "question_id": 2, "question": "Is the runway running east-west or north-south?", "answer": "east-west", "question_type": "object direction", "source": "vrsbench"}
+{"id": 72, "image": "00025_0000.png", "question_id": 3, "question": "Are there any roads visible in the image?", "answer": "no", "question_type": "object existence", "source": "vrsbench"}
+{"id": 73, "image": "00025_0000.png", "question_id": 4, "question": "What type of terrain surrounds the airport?", "answer": "natural terrain", "question_type": "scene type", "source": "vrsbench"}
+{"id": 74, "image": "00025_0000.png", "question_id": 5, "question": "Does the airport have multiple runways?", "answer": "no", "question_type": "object quantity", "source": "vrsbench"}
+{"id": 75, "image": "00026_0000.png", "question_id": 1, "question": "What sport are the fields designed for?", "answer": "baseball", "question_type": "object category", "source": "vrsbench"}
+{"id": 76, "image": "00026_0000.png", "question_id": 2, "question": "How many baseball fields are there?", "answer": "2", "question_type": "object quantity", "source": "vrsbench"}
+{"id": 77, "image": "00026_0000.png", "question_id": 3, "question": "Is there a treeline present in the image?", "answer": "yes", "question_type": "object existence", "source": "vrsbench"}
+{"id": 78, "image": "00026_0000.png", "question_id": 4, "question": "What colors indicate sandy areas?", "answer": "beige", "question_type": "object color", "source": "vrsbench"}
+{"id": 79, "image": "00026_0000.png", "question_id": 5, "question": "Are there structures visible near the baseball fields?", "answer": "yes", "question_type": "object existence", "source": "vrsbench"}
+{"id": 80, "image": "00027_0000.png", "question_id": 1, "question": "What color is the storage tank?", "answer": "white", "question_type": "object color", "source": "vrsbench"}
+{"id": 81, "image": "00027_0000.png", "question_id": 2, "question": "Is there a storage tank in the image?", "answer": "yes", "question_type": "object existence", "source": "vrsbench"}
+{"id": 82, "image": "00027_0000.png", "question_id": 3, "question": "What shape is the storage tank?", "answer": "circular", "question_type": "object shape", "source": "vrsbench"}
+{"id": 83, "image": "00028_0000.png", "question_id": 1, "question": "What is the shape of the prominent structure in the center of the image?", "answer": "round", "question_type": "object shape", "source": "vrsbench"}
+{"id": 84, "image": "00028_0000.png", "question_id": 2, "question": "Is there any visible water body in the image?", "answer": "yes", "question_type": "object existence", "source": "vrsbench"}
+{"id": 85, "image": "00028_0000.png", "question_id": 3, "question": "Is the image in color or grayscale?", "answer": "color", "question_type": "image", "source": "vrsbench"}
+{"id": 86, "image": "00029_0000.png", "question_id": 2, "question": "Is the object in the center an airplane?", "answer": "yes", "question_type": "object existence", "source": "vrsbench"}
+{"id": 87, "image": "00029_0000.png", "question_id": 3, "question": "What category of vehicle is visible in the image?", "answer": "airplane", "question_type": "object category", "source": "vrsbench"}
+{"id": 88, "image": "00029_0000.png", "question_id": 4, "question": "How many airplanes are in the image?", "answer": "1", "question_type": "object quantity", "source": "vrsbench"}
+{"id": 89, "image": "00029_0000.png", "question_id": 5, "question": "Are there any road markings visible?", "answer": "yes", "question_type": "object existence", "source": "vrsbench"}
+{"id": 90, "image": "00029_0000.png", "question_id": 6, "question": "Is the airplane positioned at an airport?", "answer": "yes", "question_type": "scene type", "source": "vrsbench"}
+{"id": 91, "image": "00030_0000.png", "question_id": 2, "question": "How many tennis courts are clearly visible in the image?", "answer": "2", "question_type": "object quantity", "source": "vrsbench"}
+{"id": 92, "image": "00030_0000.png", "question_id": 3, "question": "Is the terrain depicted urban or rural?", "answer": "unclear", "question_type": "scene type", "source": "vrsbench"}
+{"id": 93, "image": "00030_0000.png", "question_id": 4, "question": "What color are the areas surrounding the tennis courts predominantly?", "answer": "green", "question_type": "object color", "source": "vrsbench"}
+{"id": 94, "image": "00030_0000.png", "question_id": 5, "question": "Is there any tennis court located centrally at the bottom of the image?", "answer": "no", "question_type": "object position", "source": "vrsbench"}
+{"id": 95, "image": "00030_0000.png", "question_id": 6, "question": "Are the tennis courts surrounded by natural greenery?", "answer": "yes", "question_type": "object existence", "source": "vrsbench"}
+{"id": 96, "image": "00032_0000.png", "question_id": 1, "question": "What color is the water surrounding the ship?", "answer": "greenish", "question_type": "object color", "source": "vrsbench"}
+{"id": 97, "image": "00032_0000.png", "question_id": 2, "question": "How many ships are present in the image?", "answer": "1", "question_type": "object quantity", "source": "vrsbench"}
+{"id": 98, "image": "00033_0000.png", "question_id": 1, "question": "What is the main object in the image?", "answer": "ship", "question_type": "object category", "source": "vrsbench"}
+{"id": 99, "image": "00033_0000.png", "question_id": 3, "question": "Is there more than one ship visible?", "answer": "no", "question_type": "object existence", "source": "vrsbench"}

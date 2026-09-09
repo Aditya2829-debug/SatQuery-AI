@@ -1,5 +1,19 @@
 # SatQuery AI
 
+## Model 1 and Model 2 — backend integration
+
+Start with the **[integration handoff](docs/MODEL_INTEGRATION.md)** for installation,
+external artifact paths, runnable examples, response formats, and backend injection.
+
+| Model | Code | Details and recorded metrics |
+| --- | --- | --- |
+| 1 — Qwen3-VL VQA + LoRA | [Loader](src/satquery/models/qwen_vqa.py) | [Model 1](docs/MODEL1.md), [metrics](outputs/model1_metrics.json) |
+| 2 — RemoteCLIP classification/retrieval | [Package](src/satquery/models/remoteclip) | [Model 2](docs/MODEL2.md), [metrics](outputs/model2/remoteclip_model2_summary.json) |
+
+Code and tests are in `main`; trained artifacts are external. The Model 1 adapter
+must be provisioned, and the original Model 2 index remains `restore_required`.
+The backend provides opt-in bridges; its default registry still uses placeholders.
+
 **SIH26167 · Indian Space Research Organisation (ISRO) · Space Technology**
 
 > **SatQuery AI – An Interactive Vision-Language Assistant for Multimodal Remote Sensing Image Analysis through Text Queries**

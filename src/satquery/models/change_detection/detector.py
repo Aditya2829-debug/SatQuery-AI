@@ -1,15 +1,17 @@
 import numpy as np
 import torch
 import torchvision.transforms.functional as TF
-from PIL import Image
 
+from ..artifacts import artifact_path
+from ..images import rgb_image
 from .model import build_change_model
 from .postprocess import extract_change_regions
 
-class ChangeDetector:
-    def __init__(self, checkpoint_path, threshold=None, device=None, image_size=None):
-        self.device = torch.device(device if device else ("cuda" if torch.cuda.is_available() else "cpu"))
 
+class ChangeDetector:
+    def __init__(self, checkpoint_path=None, threshold=None, device=None, image_size=None):
+        self.device = torch.device(device if device else ("cuda" if torch.cuda.is_available() else "cpu"))
+        checkpoint_path = artifact_path(checkpoint_path, "SATQUERY_MODEL3_CHECKPOINT")
         checkpoint = torch.load(checkpoint_path, map_location=self.device)
 
         self.image_size = int(checkpoint.get("image_size", 256) if image_size is None else image_size)
@@ -18,22 +20,16 @@ class ChangeDetector:
         self.model = build_change_model(
             encoder_name=checkpoint.get("encoder_name", "resnet34")
         ).to(self.device)
-
         self.model.load_state_dict(checkpoint.get("model_state_dict", checkpoint))
         self.model.eval()
 
         self.mean = torch.tensor([0.485, 0.456, 0.406], device=self.device).view(1, 3, 1, 1)
         self.std = torch.tensor([0.229, 0.224, 0.225], device=self.device).view(1, 3, 1, 1)
 
-    def _load_image(self, image):
-        if isinstance(image, Image.Image):
-            return image.convert("RGB")
-        return Image.open(image).convert("RGB")
-
     @torch.inference_mode()
     def detect(self, before, after):
-        before = self._load_image(before)
-        after = self._load_image(after)
+        before = rgb_image(before)
+        after = rgb_image(after)
 
         if before.size != after.size:
             raise ValueError(f"Before/after image sizes differ: {before.size} vs {after.size}")
@@ -59,5 +55,5 @@ class ChangeDetector:
             "regions": regions,
             "mask": mask,
             "source_size": {"width": source_width, "height": source_height},
-            "mask_size": {"width": self.image_size, "height": self.image_size}
+            "mask_size": {"width": self.image_size, "height": self.image_size},
         }
