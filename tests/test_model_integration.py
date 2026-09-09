@@ -162,6 +162,7 @@ def test_index_query_dimension_and_reload_atomicity(tmp_path):
 def test_backend_bridges(monkeypatch):
     monkeypatch.syspath_prepend(str(ROOT / "backend/SatQueryAI_backend"))
     from app.models.trained import (
+        OpticalSARFusionModel,
         QwenVQAModel,
         RemoteCLIPClassifierModel,
         RemoteCLIPRetrievalModel,
@@ -203,6 +204,13 @@ def test_backend_bridges(monkeypatch):
     retriever = SimpleNamespace(search=lambda query, top_k: [{"rank": 1, "score": 0.5}])
     result = RemoteCLIPRetrievalModel(retriever).process({"query": "river"})
     assert result.result[0]["rank"] == 1
+    fusion_predictor = SimpleNamespace(
+        predict=lambda fusion_tensor: torch.ones(1, 4, 2, 2),
+    )
+    result = OpticalSARFusionModel(fusion_predictor).process(
+        {"fusion_tensor": torch.ones(6, 2, 2)}
+    )
+    assert isinstance(result.result, list)
 
 
 def test_recorded_model1_accuracy():
