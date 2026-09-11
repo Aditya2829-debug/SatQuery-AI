@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -21,7 +23,9 @@ logger = get_logger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan manager for startup and shutdown events."""
-    logger.info(f"Starting {settings.PROJECT_NAME} (version {settings.VERSION}) in [{settings.ENV}] mode...")
+    logger.info(
+        f"Starting {settings.PROJECT_NAME} (version {settings.VERSION}) in [{settings.ENV}] mode..."
+    )
     yield
     logger.info(f"Shutting down {settings.PROJECT_NAME}...")
 
@@ -39,10 +43,17 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
-    # CORS configuration
+    # Allowed origins for your React frontend
+    allowed_origins = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ]
+
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=allowed_origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -52,16 +63,31 @@ def create_app() -> FastAPI:
     app.add_exception_handler(SatqueryException, satquery_exception_handler)
     app.add_exception_handler(Exception, generic_exception_handler)
 
-    # Include routes:
-    # 1. Directly at root for /health
-    app.include_router(health_router)
-    # 2. Under API version prefix (/api/v1/health)
-    app.include_router(health_router, prefix=settings.API_V1_STR)
-    # 3. Satellite imagery routes (/api/v1/images)
-    app.include_router(images_router, prefix=f"{settings.API_V1_STR}/images")
-    # 4. Analysis management routes (/api/v1/analyses)
-    app.include_router(analyses_router, prefix=f"{settings.API_V1_STR}/analyses")
+    # Include Routes
+    app.include_router(health_router, tags=["health"])
+    app.include_router(health_router, prefix=settings.API_V1_STR, tags=["health"])
 
+    app.include_router(
+        images_router,
+        prefix=f"{settings.API_V1_STR}/images",
+        tags=["images"],
+    )
+    app.include_router(
+        images_router,
+        prefix="/images",
+        tags=["images"],
+    )
+
+    app.include_router(
+        analyses_router,
+        prefix=f"{settings.API_V1_STR}/analyses",
+        tags=["analyses"],
+    )
+    app.include_router(
+        analyses_router,
+        prefix="/analyses",
+        tags=["analyses"],
+    )
 
     return app
 
