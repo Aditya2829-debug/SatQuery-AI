@@ -8,9 +8,8 @@ from typing import Any, Dict, List, Optional, Tuple
 from fastapi import UploadFile
 from PIL import Image
 from PIL.ExifTags import GPSTAGS, TAGS
-import rasterio
-from rasterio.io import MemoryFile
-from rasterio.warp import transform
+
+
 import tifffile
 
 from app.core.config import settings
@@ -293,6 +292,9 @@ class ImageService:
         Falls back to tifffile if Rasterio encounters an unhandled edge-case.
         """
         try:
+            import rasterio
+            from rasterio.io import MemoryFile
+            from rasterio.warp import transform
             with MemoryFile(content) as memfile:
                 with memfile.open() as src:
                     width = src.width
