@@ -42,6 +42,32 @@ export const AVAILABLE_MODELS: Model[] = [
   },
 ];
 
+// ============================================================
+// 🆕 ANALYSIS CHAT TYPES (for cross-tab persistence)
+// ============================================================
+
+export interface UploadedFileItem {
+  id: string;
+  backendUUID: string;
+  name: string;
+  sizeMB: string;
+  type: string;
+  previewUrl: string;
+}
+
+export interface AnalysisMessage {
+  id: string;
+  query: string;
+  timestamp: string;
+  fileName: string;
+  status: 'analyzing' | 'completed';
+  result?: any; // ParsedAnalysisPayload — using any to avoid circular import
+}
+
+// ============================================================
+// STORE INTERFACE
+// ============================================================
+
 interface SatStoreState {
   // Theme
   darkMode: boolean;
@@ -97,16 +123,45 @@ interface SatStoreState {
   updateSettings: (newSettings: Partial<AppSettings>) => void;
   ui: UIState;
   setUIState: (newUI: Partial<UIState>) => void;
+
+  // ============================================================
+  // 🆕 ANALYSIS CHAT PERSISTENCE (survives tab switches)
+  // ============================================================
+  analysisMessages: AnalysisMessage[];
+  addAnalysisMessage: (msg: AnalysisMessage) => void;
+  updateAnalysisMessage: (
+    id: string,
+    updates: Partial<AnalysisMessage>
+  ) => void;
+  clearAnalysisMessages: () => void;
+
+  // 🆕 File slots also persisted so images stay loaded on tab switch
+  analysisFileSlot1: UploadedFileItem | null;
+  analysisFileSlot2: UploadedFileItem | null;
+  setAnalysisFileSlot1: (f: UploadedFileItem | null) => void;
+  setAnalysisFileSlot2: (f: UploadedFileItem | null) => void;
+  clearAnalysisFiles: () => void;
 }
 
-// Initial theme check from storage
-const isInitialDark = typeof window !== 'undefined' && localStorage.getItem('satquery_theme') === 'dark';
+// ============================================================
+// INITIAL THEME CHECK
+// ============================================================
+
+const isInitialDark =
+  typeof window !== 'undefined' &&
+  localStorage.getItem('satquery_theme') === 'dark';
+
 if (isInitialDark && typeof document !== 'undefined') {
   document.documentElement.classList.add('dark');
   document.body.classList.add('dark');
 }
 
+// ============================================================
+// STORE
+// ============================================================
+
 export const useSatStore = create<SatStoreState>((set) => ({
+  // ---------------- Theme ----------------
   darkMode: isInitialDark,
   toggleDarkMode: () =>
     set((state) => {
@@ -125,41 +180,55 @@ export const useSatStore = create<SatStoreState>((set) => ({
       return { darkMode: next };
     }),
 
+  // ---------------- Images ----------------
   images: [],
-  addImages: (newImages) => set((state) => ({ images: [...state.images, ...newImages] })),
+  addImages: (newImages) =>
+    set((state) => ({ images: [...state.images, ...newImages] })),
   removeImage: (id) =>
     set((state) => ({ images: state.images.filter((img) => img.id !== id) })),
   clearImages: () => set({ images: [] }),
   updateImageRole: (id, role) =>
     set((state) => ({
-      images: state.images.map((img) => (img.id === id ? { ...img, role } : img)),
+      images: state.images.map((img) =>
+        img.id === id ? { ...img, role } : img
+      ),
     })),
 
+  // ---------------- Queries ----------------
   queries: [],
-  addQuery: (query) => set((state) => ({ queries: [query, ...state.queries] })),
+  addQuery: (query) =>
+    set((state) => ({ queries: [query, ...state.queries] })),
   deleteQuery: (id) =>
     set((state) => ({ queries: state.queries.filter((q) => q.id !== id) })),
   clearQueries: () => set({ queries: [] }),
 
+  // ---------------- History ----------------
   history: [],
-  addHistoryItem: (item) => set((state) => ({ history: [item, ...state.history] })),
+  addHistoryItem: (item) =>
+    set((state) => ({ history: [item, ...state.history] })),
   deleteHistoryItem: (id) =>
     set((state) => ({ history: state.history.filter((h) => h.id !== id) })),
   clearHistory: () => set({ history: [] }),
 
+  // ---------------- Navigation ----------------
   stage: 'dashboard',
   setStage: (stage) => set({ stage }),
   activeQueryText: '',
   setActiveQueryText: (activeQueryText) => set({ activeQueryText }),
 
   selectedExample: (exampleType: string) => {
-    let q = 'What changed between these two dates, and where did the change occur?';
-    if (exampleType === 'flood') q = 'Identify flood zones using Optical and SAR data.';
-    if (exampleType === 'urban') q = 'Locate all built-up areas and roads in this image.';
-    if (exampleType === 'landcover') q = 'Describe the land-cover and major objects visible in this image.';
+    let q =
+      'What changed between these two dates, and where did the change occur?';
+    if (exampleType === 'flood')
+      q = 'Identify flood zones using Optical and SAR data.';
+    if (exampleType === 'urban')
+      q = 'Locate all built-up areas and roads in this image.';
+    if (exampleType === 'landcover')
+      q = 'Describe the land-cover and major objects visible in this image.';
     set({ activeQueryText: q, stage: 'analyzing' });
   },
 
+  // ---------------- Models ----------------
   models: AVAILABLE_MODELS,
   selectedModelId: 'm1',
   setSelectedModelId: (selectedModelId) => set({ selectedModelId }),
@@ -190,19 +259,25 @@ export const useSatStore = create<SatStoreState>((set) => ({
       stage: 'dashboard',
     })),
 
+  // ---------------- Results ----------------
   results: [],
   currentResult: null,
   setCurrentResult: (currentResult) =>
     set((state) => ({
       currentResult,
-      results: currentResult ? [currentResult, ...state.results] : state.results,
+      results: currentResult
+        ? [currentResult, ...state.results]
+        : state.results,
     })),
 
+  // ---------------- Reports ----------------
   reports: [],
-  addReport: (report) => set((state) => ({ reports: [report, ...state.reports] })),
+  addReport: (report) =>
+    set((state) => ({ reports: [report, ...state.reports] })),
   deleteReport: (id) =>
     set((state) => ({ reports: state.reports.filter((r) => r.id !== id) })),
 
+  // ---------------- Settings & UI ----------------
   settings: {
     theme: 'light',
     defaultView: 'upload',
@@ -224,4 +299,33 @@ export const useSatStore = create<SatStoreState>((set) => ({
     notifications: ['Model weights loaded', 'EPSG:4326 verified'],
   },
   setUIState: (newUI) => set((state) => ({ ui: { ...state.ui, ...newUI } })),
+
+  // ============================================================
+  // 🆕 ANALYSIS CHAT STATE (persists across tab navigation)
+  // ============================================================
+  analysisMessages: [],
+
+  addAnalysisMessage: (msg) =>
+    set((state) => ({
+      analysisMessages: [...state.analysisMessages, msg],
+    })),
+
+  updateAnalysisMessage: (id, updates) =>
+    set((state) => ({
+      analysisMessages: state.analysisMessages.map((m) =>
+        m.id === id ? { ...m, ...updates } : m
+      ),
+    })),
+
+  clearAnalysisMessages: () => set({ analysisMessages: [] }),
+
+  // 🆕 File slots (so uploaded images stay loaded when tab switches)
+  analysisFileSlot1: null,
+  analysisFileSlot2: null,
+
+  setAnalysisFileSlot1: (f) => set({ analysisFileSlot1: f }),
+  setAnalysisFileSlot2: (f) => set({ analysisFileSlot2: f }),
+
+  clearAnalysisFiles: () =>
+    set({ analysisFileSlot1: null, analysisFileSlot2: null }),
 }));

@@ -3,8 +3,11 @@ import { ImageUploader } from '../components/upload/ImageUploader';
 import { QueryInterface } from '../components/query/QueryInterface';
 import { ExecutionTraceDashboard } from '../components/agent/ExecutionTraceDashboard';
 import { ResultsViewer } from '../components/results/ResultsViewer';
+import { useSatStore } from '../store/useSatStore';
 
 export const HomePage: React.FC = () => {
+  const { currentResult } = useSatStore();
+
   return (
     <div className="space-y-6 pb-12">
       {/* Top section: Two Column Intake & Query */}
@@ -12,6 +15,7 @@ export const HomePage: React.FC = () => {
         <div className="lg:col-span-5">
           <ImageUploader />
         </div>
+
         <div className="lg:col-span-7">
           <QueryInterface />
         </div>
@@ -21,7 +25,7 @@ export const HomePage: React.FC = () => {
       <ExecutionTraceDashboard />
 
       {/* Analytical Findings & Map Visualization */}
-      <ResultsViewer />
+      {currentResult && <ResultsViewer result={currentResult} />}
     </div>
   );
 };

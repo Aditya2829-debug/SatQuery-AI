@@ -1,7 +1,9 @@
 // ==========================================
 // 1. IMAGE & GEOSPATIAL TYPES
 // ==========================================
+
 export type ImageType = 'optical' | 'sar' | 'multispectral';
+
 export type ImageFormat = 'geotiff' | 'tiff' | 'png' | 'jpeg';
 
 export interface GeospatialMetadata {
@@ -38,15 +40,20 @@ export interface UploadedImage {
 // ==========================================
 // 2. QUERY TYPES
 // ==========================================
-export type QueryTaskType = 
-  | 'vqa' 
-  | 'captioning' 
-  | 'grounding' 
-  | 'change' 
+
+export type QueryTaskType =
+  | 'vqa'
+  | 'captioning'
+  | 'grounding'
+  | 'change'
   | 'cross-modal'
   | 'auto';
 
-export type QueryStatus = 'pending' | 'processing' | 'completed' | 'failed';
+export type QueryStatus =
+  | 'pending'
+  | 'processing'
+  | 'completed'
+  | 'failed';
 
 export interface Query {
   id: string;
@@ -61,12 +68,13 @@ export interface Query {
 // ==========================================
 // 3. ANNOTATIONS & RESULTS
 // ==========================================
+
 export interface Annotation {
   id: string;
   type: 'boundingBox' | 'mask' | 'point' | 'polygon';
   label: string;
   confidence: number;
-  coordinates: number[]; // e.g. [minLat, minLng, maxLat, maxLng]
+  coordinates: number[];
   color: string;
   metadata?: Record<string, string | number | boolean>;
 }
@@ -82,7 +90,7 @@ export interface MapLayer {
 export interface VisualEvidence {
   image: string;
   annotations: Annotation[];
-  mapOverlay?: any;
+  mapOverlay?: unknown;
   layers?: MapLayer[];
   changeHeatmapUrl?: string;
 }
@@ -115,8 +123,27 @@ export interface LandCoverDistribution {
 }
 
 // ==========================================
-// 4. AGENT & EXECUTION TRACE TYPES
+// 4. HISTORY TYPES
 // ==========================================
+
+export type HistoryItemStatus =
+  | 'Completed'
+  | 'Failed'
+  | 'Processing';
+
+export interface HistoryItem {
+  id: string;
+  title: string;
+  date: string;
+  taskType: string;
+  status: HistoryItemStatus;
+  thumbnail: string;
+}
+
+// ==========================================
+// 5. AGENT & EXECUTION TRACE TYPES
+// ==========================================
+
 export interface ExecutionStep {
   id: string;
   name: string;
@@ -152,8 +179,9 @@ export interface Model {
 }
 
 // ==========================================
-// 5. REPORT TYPES
+// 6. REPORT TYPES
 // ==========================================
+
 export interface ImageInfo {
   id: string;
   name: string;
@@ -166,24 +194,31 @@ export interface Report {
   id: string;
   title: string;
   generatedAt: Date;
+
   query: {
     text: string;
     type: string;
     timestamp: Date;
   };
+
   images: ImageInfo[];
+
   results: Result[];
+
   executionSummary: {
     task: string;
     models: string[];
     parameters: Record<string, string | number | boolean>;
     totalTime: number;
   };
+
   confidence: {
     overall: number;
     breakdown?: Record<string, number>;
   };
+
   visualEvidence: string[];
+
   metadata: {
     version: string;
     generatedBy: string;
@@ -191,8 +226,9 @@ export interface Report {
 }
 
 // ==========================================
-// 6. UI & SETTINGS TYPES
+// 7. UI & SETTINGS TYPES
 // ==========================================
+
 export interface AppSettings {
   theme: 'light' | 'dark' | 'auto';
   defaultView: 'upload' | 'explore' | 'history' | 'reports';
@@ -212,7 +248,10 @@ export interface UIState {
   notifications: string[];
 }
 
-export type AnalysisStage = 'dashboard' | 'analyzing' | 'results';
+export type AnalysisStage =
+  | 'dashboard'
+  | 'analyzing'
+  | 'results';
 
 export interface DatasetItem {
   id: string;
@@ -237,4 +276,151 @@ export interface TeamMember {
   role: string;
   initial: string;
   color: string;
+}
+
+// ============================================================================
+// SATQUERY AI MODEL OUTPUT SCHEMAS
+// Matches Model Output Documentation v1.0
+// ============================================================================
+
+// ==========================================
+// 8. CHANGE DETECTION
+// CD003 UNet-ResNet34
+// ==========================================
+
+export interface CD003Region {
+  bbox: [number, number, number, number];
+  // [x1, y1, x2, y2] in 256x256 mask space
+
+  area_pixels: number;
+
+  center: [number, number];
+  // [cx, cy]
+}
+
+export interface CD003Result {
+  changed: boolean;
+  change_percent: number;
+  threshold: number;
+  num_regions: number;
+  regions: CD003Region[];
+
+  source_size?: {
+    width: number;
+    height: number;
+  };
+
+  mask_size?: {
+    width: number;
+    height: number;
+  };
+}
+
+// ==========================================
+// 9. VISUAL QUESTION ANSWERING
+// Qwen3-VL-2B-Instruct
+// ==========================================
+
+export interface VQAResult {
+  answer: string;
+  raw_answer?: string;
+  model?: string;
+  confidence?: number | null;
+}
+
+// ==========================================
+// 10. REGION GROUNDING
+// RemoteCLIP ViT-B/32
+// ==========================================
+
+export interface RemoteCLIPClassification {
+  top_label: string;
+
+  top_label_index?: number;
+
+  confidence_score: number;
+  // Cosine similarity (typically 0.15 - 0.35)
+
+  class_scores: Record<string, number>;
+  // EuroSAT class scores
+}
+
+export interface RemoteCLIPRetrieval {
+  rank: number;
+  index: number;
+  score: number;
+  label: string;
+}
+
+export interface RemoteCLIPResult {
+  classification: RemoteCLIPClassification;
+
+  retrieval?: RemoteCLIPRetrieval[];
+
+  predicted_class?: string;
+
+  similarity_score?: number;
+}
+
+// ==========================================
+// 11. UNIVERSAL MODEL RESULT CONTAINER
+// ==========================================
+
+export type BackendModelResult =
+  | CD003Result
+  | VQAResult
+  | RemoteCLIPResult;
+
+export interface BackendModelResultEnvelope {
+  status:
+    | 'success'
+    | 'error'
+    | 'NOT_IMPLEMENTED'
+    | string;
+
+  result: BackendModelResult;
+
+  confidence?: number | null;
+
+  model_name?: string;
+
+  model_version?: string;
+
+  limitations?: string[];
+
+  processing_time_ms?: number | null;
+}
+
+// ==========================================
+// 12. COMMON SATQUERY API RESPONSE
+// ==========================================
+
+export type SpecialistType =
+  | 'vqa'
+  | 'region_grounding'
+  | 'change_detection'
+  | 'optical_sar_fusion'
+  | string;
+
+export interface SatQueryApiResponseEnvelope {
+  status: 'success' | 'error';
+
+  message: string;
+
+  data: {
+    analysis_id: string;
+    // UUID
+
+    query: string;
+
+    selected_specialist: SpecialistType;
+
+    confidence: number;
+    // Gemini router confidence (0.0 to 1.0)
+
+    reason: string;
+    // Gemini explanation
+
+    model_result: BackendModelResultEnvelope;
+  };
 }
